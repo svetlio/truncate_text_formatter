@@ -1,5 +1,5 @@
-truncate_text_formatter
-=======================
+Truncate text formatter - Drupal 7 module
+=========================================
 
 Truncate text formatter for field type text, text long, text long with summary, display settings for length, wordsafe, add ellipsis.
 
