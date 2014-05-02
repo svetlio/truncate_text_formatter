@@ -1,0 +1,120 @@
+<?php
+
+/**
+ * Implements hook_field_formatter_info().
+ */
+function truncate_text_formatter_field_formatter_info() {
+  return array(
+    'text_truncated' => array(
+      'label' => t('Truncate text'),
+      'field types' => array('text', 'text_long', 'text_with_summary'),
+      'settings'  => array( 
+        'trunc_length' => 'Length', 
+        'wordsafe' => 'Wordsafe',
+        'add_ellipsis' => 'Add ellipsis', 
+      )
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_formatter_settings_form().
+ */
+function truncate_text_formatter_field_formatter_settings_form($field, $instance, $view_mode, $form, &$form_state) {
+  $display = $instance['display'][$view_mode];
+  $settings = $display['settings'];
+  
+  $default = array(
+    'trunc_length' => 60,
+    'wordsafe' => TRUE,
+    'add_ellipsis' => TRUE,
+  );
+
+  $element = array();
+
+  if ($display['type'] == 'text_truncated') {
+    $element['trunc_length'] = array(
+      '#title' => t('Length'),
+      '#type' => 'textfield',
+      '#size' => 20,
+      '#default_value' => $settings['trunc_length'] ? $settings['trunc_length'] : $default['trunc_length'],
+      '#element_validate' => array('element_validate_integer_positive'),
+      '#required' => TRUE,
+    );
+    $element['wordsafe'] = array(
+      '#title' => t('Wordsafe'),
+      '#type' => 'checkbox',
+      '#default_value' => $settings['wordsafe'] ? $settings['wordsafe'] : $default['wordsafe'],
+    );
+    $element['add_ellipsis'] = array(
+      '#title' => t('Add ellipsis'),
+      '#type' => 'checkbox',
+      '#default_value' => $settings['add_ellipsis'] ? $settings['add_ellipsis'] : $default['add_ellipsis'],
+    );
+  }
+
+  return $element;
+}
+
+/**
+ * Implements hook_field_formatter_settings_form_summary().
+ */
+function truncate_text_formatter_field_formatter_settings_summary($field, $instance, $view_mode) {
+  $display = $instance['display'][$view_mode];
+  $settings = $display['settings'];
+  
+  $default = array(
+    'trunc_length' => 60,
+    'wordsafe' => TRUE,
+    'add_ellipsis' => TRUE,
+  );
+  
+  $wordsafe = @$settings['wordsafe'] || $default['wordsafe'] ? t('Yes') : t('No');
+  $add_ellipsis = @$settings['add_ellipsis'] || $default['add_ellipsis'] ? t('Yes') : t('No');
+  
+  $summary = '';
+
+  if ($display['type'] == 'text_truncated') {
+    $summary = t('Length: @chars chars, wordsafe: @wordsafe, add ellipsis: @add_ellipsis', array(
+      '@chars' => @$settings['trunc_length'] ? @$settings['trunc_length'] : $default['trunc_length'],
+      '@wordsafe' => $wordsafe,
+      '@add_ellipsis' => $add_ellipsis,
+    ));
+  }
+
+  return $summary;
+}
+
+/**
+ * Implements hook_field_formatter_view().
+ */
+function truncate_text_formatter_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
+  $element = array();
+  $settings = $display['settings'];
+
+  switch ($display['type']) {
+    case 'text_truncated':
+      foreach ($items as $delta => $item) {
+        $default = array(
+          'trunc_length' => 60,
+          'wordsafe' => TRUE,
+          'add_ellipsis' => TRUE,
+        );
+        
+        //
+        $max_trunc_length = @$settings['trunc_length'] ? $settings['trunc_length'] : $default['trunc_length'];
+        $wordsafe = @$settings['wordsafe'] ? $settings['wordsafe'] : $default['wordsafe'];
+        $add_ellipsis = @$settings['add_ellipsis'] ? $settings['add_ellipsis'] : $default['add_ellipsis'];
+        
+        //
+        $text = strip_tags($item['value']);
+        $output = truncate_utf8($text, $max_trunc_length, $wordsafe = TRUE, $add_ellipsis = TRUE, $min_wordsafe_trunc_length = 1);
+        
+        $element[$delta] = $output;
+      }
+      break;
+  }
+
+  return $element;
+}
+

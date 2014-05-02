@@ -1,0 +1,4 @@
+name = Truncate text formatter
+description = Truncate text formatter for field type text, text long, text long with summary, display settings for length, wordsafe, add ellipsis.
+package = Custom
+core = 7.x
