@@ -9,9 +9,10 @@ function truncate_text_formatter_field_formatter_info() {
       'label' => t('Truncate text'),
       'field types' => array('text', 'text_long', 'text_with_summary'),
       'settings'  => array( 
-        'trunc_length' => 'Length', 
-        'wordsafe' => 'Wordsafe',
-        'add_ellipsis' => 'Add ellipsis', 
+        'trunc_length' => 65, 
+        'wordsafe' => TRUE,
+        'add_ellipsis' => TRUE,
+        'read_more' => t('Read more'),
       )
     ),
   );
@@ -28,6 +29,7 @@ function truncate_text_formatter_field_formatter_settings_form($field, $instance
     'trunc_length' => 60,
     'wordsafe' => TRUE,
     'add_ellipsis' => TRUE,
+    'read_more' => t('Read more'),
   );
 
   $element = array();
@@ -51,6 +53,13 @@ function truncate_text_formatter_field_formatter_settings_form($field, $instance
       '#type' => 'checkbox',
       '#default_value' => $settings['add_ellipsis'] ? $settings['add_ellipsis'] : $default['add_ellipsis'],
     );
+    $element['read_more'] = array(
+      '#title' => t('Read more'),
+      '#type' => 'textfield',
+      '#size' => 20,
+      '#default_value' => $settings['read_more'] ? $settings['read_more'] : $default['read_more'],
+      '#required' => TRUE,
+    );
   }
 
   return $element;
@@ -67,18 +76,21 @@ function truncate_text_formatter_field_formatter_settings_summary($field, $insta
     'trunc_length' => 60,
     'wordsafe' => TRUE,
     'add_ellipsis' => TRUE,
+    'read_more' => t('Read more'),
   );
   
   $wordsafe = @$settings['wordsafe'] || $default['wordsafe'] ? t('Yes') : t('No');
   $add_ellipsis = @$settings['add_ellipsis'] || $default['add_ellipsis'] ? t('Yes') : t('No');
+  $read_more = @$settings['read_more'] ? $settings['read_more'] : $default['read_more'];
   
   $summary = '';
 
   if ($display['type'] == 'text_truncated') {
-    $summary = t('Length: @chars chars, wordsafe: @wordsafe, add ellipsis: @add_ellipsis', array(
+    $summary = t('Length: @chars chars, wordsafe: @wordsafe, add ellipsis: @add_ellipsis, read more: @read_more', array(
       '@chars' => @$settings['trunc_length'] ? @$settings['trunc_length'] : $default['trunc_length'],
       '@wordsafe' => $wordsafe,
       '@add_ellipsis' => $add_ellipsis,
+      '@read_more' => $read_more,
     ));
   }
 
@@ -99,6 +111,7 @@ function truncate_text_formatter_field_formatter_view($entity_type, $entity, $fi
           'trunc_length' => 60,
           'wordsafe' => TRUE,
           'add_ellipsis' => TRUE,
+          'read_more' => TRUE,
         );
         
         //
@@ -106,12 +119,19 @@ function truncate_text_formatter_field_formatter_view($entity_type, $entity, $fi
         $wordsafe = @$settings['wordsafe'] ? $settings['wordsafe'] : $default['wordsafe'];
         $add_ellipsis = @$settings['add_ellipsis'] ? $settings['add_ellipsis'] : $default['add_ellipsis'];
         
+        $read_more = @$settings['read_more'] ? $settings['read_more'] : $default['read_more'];
+        
+        if ($read_more) {
+          $read_more = ' ' . l(t($read_more), 'node/' . $entity -> nid, array('attributes' => array('title' => $entity -> title, 'class' => array('node-read-more'))));
+        }
+        
         //
         $text = strip_tags($item['value']);
-        $output = truncate_utf8($text, $max_trunc_length, $wordsafe = TRUE, $add_ellipsis = TRUE, $min_wordsafe_trunc_length = 1);
+        $output['#markup'] = truncate_utf8($text, $max_trunc_length, $wordsafe = TRUE, $add_ellipsis = TRUE, $min_wordsafe_trunc_length = 1) . $read_more;
         
         $element[$delta] = $output;
       }
+      
       break;
   }
 
